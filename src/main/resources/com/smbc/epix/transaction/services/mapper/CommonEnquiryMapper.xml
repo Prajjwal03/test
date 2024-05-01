@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CommonEnquiryDetails">
+    <resultMap id="CommonEnquiryDetailsCount" type="com.smbc.epix.transaction.services.dto.table.CommonEnquiryDetailsDTO">
+        <result property="count" column="row_count" javaType="int" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <select id="getCommonEnquiryDetailsCount" resultMap="CommonEnquiryDetailsCount" parameterType="com.smbc.epix.transaction.services.model.CommonEnquiry">
+        select count(DISTINCT ProcessInstanceID) as row_count from WFINSTRUMENTTABLE (nolock) join TR_T_EXT (nolock) on
+        WFINSTRUMENTTABLE.VAR_REC_1=TR_T_EXT.Itemindex
+        LEFT OUTER JOIN PDBUser P1 (nolock) on P1.UserIndex=WFINSTRUMENTTABLE.Createdby
+        LEFT OUTER JOIN PDBUser P2 (nolock) on P2.UserName=WFINSTRUMENTTABLE.LockedByName
+        <foreach item="item" index="index" collection="dynamicJoin" separator="">
+            LEFT OUTER JOIN ${item}
+        </foreach>
+        <where>
+            TransactionID NOT IN ('null')
+        </where>
+        <foreach item="item" index="index" collection="dynamicSearchWhere" separator="">
+            AND ${item}
+        </foreach>
+    </select>
+
+    <select id="getCommonEnquiryDetails" resultType="map" parameterType="com.smbc.epix.transaction.services.model.CommonEnquiry">
+        select DISTINCT ${dynamicSelect},ProcessInstanceID,LockStatus from WFINSTRUMENTTABLE (nolock) join TR_T_EXT (nolock)on
+        WFINSTRUMENTTABLE.VAR_REC_1=TR_T_EXT.Itemindex
+        LEFT OUTER JOIN PDBUser P1 (nolock) on P1.UserIndex=WFINSTRUMENTTABLE.Createdby
+        LEFT OUTER JOIN PDBUser P2 (nolock) on P2.UserName=WFINSTRUMENTTABLE.LockedByName
+        <foreach item="item" index="index" collection="dynamicJoin" separator="">
+            LEFT OUTER JOIN ${item}
+        </foreach>
+        <where>
+            TransactionID NOT IN ('null')
+        </where>
+        <foreach item="item" index="index" collection="dynamicSearchWhere" separator="">
+            AND ${item}
+        </foreach>
+        ORDER BY ${orderBy} ${sortBy}
+        OFFSET ${pageNo} ROWS FETCH NEXT ${pageSize} ROWS ONLY
+    </select>
+
+    <!-- Added by Sai 22 Apr 2021 -->
+    <select id="getCommonEnquiryDetailsCountDfx" resultMap="CommonEnquiryDetailsCount" parameterType="com.smbc.epix.transaction.services.model.CommonEnquiry">
+        SELECT count(*) as row_count FROM(
+        SELECT DISTINCT ${dynamicSelect}, WFINSTRUMENTTABLE.ProcessInstanceID, WFINSTRUMENTTABLE.LockStatus, ValidTill AS ValidTill,
+        WFINSTRUMENTTABLE.WorkItemId
+        FROM WFINSTRUMENTTABLE (nolock) JOIN DFX_T_EXT (nolock) ON WFINSTRUMENTTABLE.VAR_REC_1=DFX_T_EXT.Itemindex
+        <foreach item="item" index="index" collection="dynamicJoin" separator="">
+            FULL OUTER JOIN ${item}
+        </foreach>
+        <where>
+            BranchCode=${branch} AND BusinessCategoryCode=${product} AND WorkItemId=1 AND TransactionID NOT IN ('null')
+        </where>
+        )as table2
+        where
+        <trim prefix="" prefixOverrides="AND">
+            <foreach item="item" index="index" collection="dynamicSearchWhere" separator="AND">
+                ${item}
+            </foreach>
+        </trim>
+    </select>
+
+    <select id="getCommonEnquiryDetailsDfx" resultType="map" parameterType="com.smbc.epix.transaction.services.model.CommonEnquiry">
+        SELECT * FROM(
+        SELECT DISTINCT ${dynamicSelect}, WFINSTRUMENTTABLE.ProcessInstanceID, WFINSTRUMENTTABLE.LockStatus, ValidTill AS ValidTill,
+        WFINSTRUMENTTABLE.WorkItemId
+        FROM WFINSTRUMENTTABLE (nolock) JOIN DFX_T_EXT (nolock) ON WFINSTRUMENTTABLE.VAR_REC_1=DFX_T_EXT.Itemindex
+        <foreach item="joinitem" index="index" collection="dynamicJoin" separator="">
+            FULL OUTER JOIN ${joinitem}
+        </foreach>
+        <where>
+            BranchCode=${branch} AND BusinessCategoryCode=${product} AND WorkItemId=1 AND TransactionID NOT IN ('null')
+        </where>
+        )as table2
+        where
+        <trim prefix="" prefixOverrides="AND">
+            <foreach item="item" index="index" collection="dynamicSearchWhere" separator="AND">
+                ${item}
+            </foreach>
+        </trim>
+        ORDER BY ${orderBy} ${sortBy}
+        OFFSET ${pageNo} ROWS FETCH NEXT ${pageSize} ROWS ONLY
+    </select>
+
+</mapper>

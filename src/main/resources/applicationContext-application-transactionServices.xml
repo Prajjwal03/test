@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:annotation-config/>
+
+    <bean id="sessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean" primary="true">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:mybatis-config-transactionServices.xml"/>
+    </bean>
+
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager" primary="true">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <bean id="ngLogger" class="com.smbc.epix.transaction.services.utils.NGLogger">
+        <constructor-arg ref="transactionServicesUtils"/>
+    </bean>
+
+    <beans profile="development">
+        <bean id="appProperties" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+            <property name="ignoreUnresolvablePlaceholders" value="true"/>
+            <property name="locations" value="file:application-transactionServices.properties"/>
+        </bean>
+
+        <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource" primary="true">
+            <constructor-arg index="0" value="${transactionServices.url}"/>
+            <constructor-arg index="1" value="${transactionServices.userName}"/>
+            <constructor-arg index="2" value="${transactionServices.password}"/>
+        </bean>
+
+        <bean id="transactionServicesUtils" class="com.smbc.epix.transaction.services.utils.TransactionServicesUtils">
+            <constructor-arg index="0" value="application-transactionServices.properties"/>
+        </bean>
+    </beans>
+
+    <beans profile="production">
+        <bean id="appProperties" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+            <property name="ignoreUnresolvablePlaceholders" value="true"/>
+            <property name="locations" value="file:${user.dir}/TreasuryConfig/application-transactionServices.properties"/>
+        </bean>
+
+        <bean id="dataSource" class="org.springframework.jndi.JndiObjectFactoryBean" primary="true">
+            <property name="jndiName" value="java:/epixtr"/>
+        </bean>
+
+        <bean id="transactionServicesUtils" class="com.smbc.epix.transaction.services.utils.TransactionServicesUtils">
+            <constructor-arg index="0" value="${user.dir}/TreasuryConfig/application-transactionServices.properties"/>
+        </bean>
+    </beans>
+</beans>

@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="TableDetails">
+    <resultMap id="ListQueueParamsTableDetailsMapper" type="com.smbc.epix.transaction.services.dto.table.ListQueueParamsDTO">
+        <result property="id" column="ID" javaType="int" jdbcType="INTEGER"/>
+        <result property="param" column="Param" javaType="String" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="getListQueueParamsTableDetails" resultMap="ListQueueParamsTableDetailsMapper">
+        SELECT ID,Param FROM TM_M_LISTQUEUEPARAMS (nolock)
+    </select>
+
+    <select id="getListQueueAccessTableDetails" resultType="map" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT DISTINCT ${listQueueParamQuery},TM_M_LISTQUEUEACCESS.RoleID
+        FROM TM_M_LISTQUEUEACCESS (nolock) INNER JOIN TM_M_LIST (nolock) ON TM_M_LIST.ID = TM_M_LISTQUEUEACCESS.ListID
+        INNER JOIN TM_M_USERROLE_MAP (nolock) ON TM_M_USERROLE_MAP.RoleId = TM_M_LISTQUEUEACCESS.RoleID
+        INNER JOIN TM_M_USERROLES (nolock) ON TM_M_USERROLES.RoleId = TM_M_LISTQUEUEACCESS.RoleId AND TM_M_USERROLES.ProductCode='${searchString2}'
+        WHERE userIndex=${passingValue1} and List=${searchString1}
+    </select>
+
+    <select id="getToDoSearchField" resultType="map" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT *
+        FROM TM_M_SEARCHFILTER (nolock) WHERE
+        BranchCode=${searchString1} AND Productcode=${searchString2} AND UserCategory in ( ${dynamicWhereClauseCase1} )
+        ORDER BY OrderID,FieldName ASC
+    </select>
+
+    <select id="getToDoColumnField" resultType="map" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT *
+        FROM TM_M_SEARCHRESULT (nolock) WHERE
+        BranchCode=${searchString1} AND Productcode=${searchString2} AND UserCategory in ( ${dynamicWhereClauseCase1} )
+        ORDER BY OrderID,FieldName ASC
+    </select>
+
+    <select id="getEnquirySearchField" resultType="map" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT *
+        FROM TM_M_ENQUIRYSEARCHFILTER (nolock) WHERE
+        BranchCode=${searchString1} AND Productcode=${searchString2} AND UserCategory in ( ${dynamicWhereClauseCase1} )
+        ORDER BY OrderID,FieldName ASC
+    </select>
+
+    <select id="getEnquiryColumnField" resultType="map" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT *
+        FROM TM_M_ENQUIRYSEARCHRESULT (nolock) WHERE
+        BranchCode=${searchString1} AND Productcode=${searchString2} AND UserCategory in ( ${dynamicWhereClauseCase1} )
+        ORDER BY OrderID,FieldName ASC
+    </select>
+
+    <select id="getDropDownData" resultType="map" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        select Distinct(${searchString2})from ${searchString1} (nolock) where ${searchString2} IS NOT NULL
+    </select>
+
+    <resultMap id="UserAcessMapDetailsMapper" type="com.smbc.epix.transaction.services.dto.table.UserAccessMapDTO">
+        <result property="branchCode" column="BranchCode" javaType="String" jdbcType="VARCHAR"/>
+        <result property="productCode" column="ProductCode" javaType="String" jdbcType="VARCHAR"/>
+        <result property="txnTypeCode" column="TxnTypeCode" javaType="String" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="getUserAccessMap" resultMap="UserAcessMapDetailsMapper" parameterType="int">
+        SELECT BranchCode,ProductCode,TxnTypeCode FROM TM_M_USERACCESS_MAP (nolock) where UserIndex=${passingValue1} AND Productcode=${searchString2}
+    </select>
+
+    <select id="getBranch" resultType="map" parameterType="int">
+        select DISTINCT b.BranchName,b.BranchCode FROM TM_M_USERACCESS_MAP a (nolock) JOIN
+        TM_M_BRANCH b (nolock) ON a.BranchCode=b.BranchCode where a.UserIndex=#{userIndex} ORDER BY b.BranchCode DESC
+    </select>
+
+    <select id="getProduct" resultType="map" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT DISTINCT c.Description AS productName,a.productCode FROM TM_M_USERACCESS_MAP a (nolock)
+        JOIN TM_M_BRANCH b (nolock) ON a.BranchCode=b.BranchCode
+        JOIN tm_m_product c (nolock) ON c.ProductCode=a.ProductCode where a.UserIndex=${passingValue1} and b.BranchName=${searchString1}
+    </select>
+
+    <select id="getEnquiryColumnFields" resultType="map" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT FieldID,FieldName,FieldType,ParentID,TableName,SearchFlag,SortFlag,BranchCode,ProductCode,
+        OrderId,FieldTypeColumnName,TableToJoin,ColumnToJoin
+        FROM TM_M_ENQUIRYSEARCHFILTER (nolock) WHERE BranchCode=${searchString1} AND ProductCode=${searchString2} ORDER BY OrderID,FieldName ASC
+    </select>
+
+    <select id="getDropDownDataForTransactionType" resultType="map" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT * FROM TM_M_USERACCESS_MAP a (nolock) JOIN TM_M_TXNTYPE b (nolock) ON a.TxnTypeCode=b.txnTypeCode WHERE a.UserIndex=${passingValue1}
+        AND a.BranchCode=${searchString1} AND a.ProductCode=${searchString2}
+    </select>
+
+    <!--  Bug ID: 1080133
+       Corrected by:Vaishali Gupta
+       Modified Date: 18/05/2020
+       Bug Description : In the case enquiry screen, for both normal search and advanced search,
+                        when selecting case search as the criteria, only the value - New is available to be selected
+       Cause:
+       Solution:  -->
+
+    <select id="getCaseStatus" resultType="map" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT DISTINCT(Status) FROM TR_M_WORKFLOW (nolock) WHERE BranchCode=${searchString1} AND Productcode=${searchString2} AND Status NOT IN
+        ('New')
+    </select>
+
+    <select id="getUserRoleName" resultType="java.lang.String" parameterType="int">
+        SELECT a.RoleName FROM TM_M_USERROLES a (nolock) JOIN TM_M_USERROLE_MAP b (nolock) ON a.RoleId=b.RoleId WHERE b.UserIndex=#{userIndex}
+    </select>
+
+    <resultMap id="userMapper" type="com.smbc.epix.transaction.services.dto.table.UserDTO">
+        <result property="personalName" column="PersonalName"/>
+        <result property="familyName" column="FamilyName"/>
+    </resultMap>
+
+    <select id="getUserName" resultType="map" parameterType="int">
+        SELECT PersonalName,FamilyName FROM PDBUser (nolock) WHERE UserIndex=#{userIndex}
+    </select>
+
+    <select id="getUserCategory" resultType="java.lang.String" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT distinct cat.UserCategoryName FROM TM_M_USERROLE_MAP rolemap (nolock)
+        INNER JOIN TM_M_USERCATEGORYMAP catmap (nolock) ON rolemap.RoleId = catmap.RoleID
+        INNER JOIN TM_M_USERCATEGORY cat (nolock) ON cat.UserCategoryID = catmap.UserCategoryID
+        WHERE rolemap.UserIndex=${passingValue1} AND catmap.ProductCode=${searchString2}
+    </select>
+
+    <resultMap id="userRoleDetailsMapper" type="com.smbc.epix.transaction.services.dto.table.UserRoleDTO">
+        <result property="roleId" column="RoleID"/>
+        <result property="categoryName" column="UserCategoryName"/>
+    </resultMap>
+
+    <select id="getUserRoleDetails" resultMap="userRoleDetailsMapper" parameterType="int">
+        SELECT UR.RoleID, UC.UserCategoryName FROM TM_M_USERCATEGORY UC (nolock), TM_M_USERROLE_MAP UR (nolock),
+        TM_M_ACTIVITYROLEMAP AR (nolock), TM_M_USERCATEGORYMAP UCM (nolock), TM_M_USERROLES URN WITH(NoLock) WHERE AR.ActivityID=1
+        AND AR.ActivityID=UR.ActivityId AND UC.UserCategoryName IN ('Branch','SSC') AND UR.RoleID=AR.RoleId AND
+        UR.UserIndex=#{userIndex} AND UCM.UserCategoryID=UC.UserCategoryID AND UCM.RoleID=AR.RoleId AND UR.RoleID=URN.RoleId
+    </select>
+
+    <select id="getSessionStatus" resultType="map" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT * FROM PDBConnection (nolock) where RandomNumber=${passingValue1} and UserIndex=${passingValue2}
+    </select>
+
+    <select id="getCommentHistory" resultType="map" parameterType="String">
+        SELECT a.Comments,a.Transaction_Id,a.Action,a.ActionDatetime,dbo.getUserName (a.Transaction_Id, a.UserId)UserId,b.RoleName,dbo.getUserName
+        (a.Transaction_Id, 'CHCreatedBy')CreatedbyName,d.Createddatetime FROM
+        TR_T_CommentsHistory a (nolock) JOIN TM_M_USERROLES b (nolock) ON b.RoleId=a.Role LEFT JOIN TR_T_EXT c (nolock) ON
+        c.TransactionID=a.Transaction_Id LEFT JOIN WFINSTRUMENTTABLE d ON d.VAR_REC_1=c.Itemindex
+        WHERE Transaction_Id=#{transactionID} AND a.Comments IS NOT NULL ORDER BY ActionDatetime DESC
+    </select>
+
+    <resultMap id="ListApplicationMapper" type="com.smbc.epix.transaction.services.dto.table.ListApplicationDTO">
+        <result property="application" column="Application" javaType="String" jdbcType="VARCHAR"/>
+        <result property="applicationLink" column="Application_Link" javaType="String" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="getListApplicationDetails" resultMap="ListApplicationMapper">
+        SELECT Application, Application_Link FROM TR_M_APPLICATION WITH (nolock) WHERE IsActive ='Y'
+    </select>
+
+    <select id="getExtTableDetails" resultType="java.lang.String">
+        SELECT DISTINCT(TableName) FROM TM_M_PRODUCT_CONFIG_DETAILS WHERE Productcode=#{product} AND TableForm ='EXT'
+    </select>
+
+    <select id="getIformDetails" resultType="map">
+        SELECT * FROM TM_M_PRODUCT_FORM_DETAILS WHERE Productcode=#{productCode}
+    </select>
+
+    <resultMap id="versionHistoryMapper" type="com.smbc.epix.transaction.services.dto.table.VersionHistoryDTO">
+        <result property="contractNo" column="Contract_No"/>
+        <result property="lockStatus" column="LockStatus"/>
+        <result property="processInstanceID" column="ProcessInstanceID"/>
+        <result property="versionNumber" column="versionNumber"/>
+        <result property="transactionID" column="TransactionID"/>
+    </resultMap>
+
+    <select id="getVersionHistory" resultMap="versionHistoryMapper" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT e.TransactionID,e.Contract_No,e.versionNumber,w.ProcessInstanceID,w.LockStatus FROM DFX_T_EXT e
+        JOIN WFINSTRUMENTTABLE w ON e.itemindex=w.VAR_REC_1 WHERE e.Contract_No=${contractNo}
+        AND e.TransactionID NOT IN (${transactionID})
+    </select>
+
+    <!-- Added by Richa 17-June-2021 for Custom Dashboard -->
+    <select id="getCustomDashboardData" resultType="map" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT t3.sub_product_id,t3.Department, sum(t3.PendingTreasuryBack) AS PendingTreasuryBack,
+        sum(t3.PendingOperationMaker) AS PendingOperationMaker,sum(t3.PendingOperationChecker) AS PendingOperationChecker,
+        sum(t3.UtilizationCompleted) AS UtilizationCompleted
+        FROM
+        (
+        SELECT DISTINCT (t1.sub_product_id),t1.person_customer,t1.pid,
+        CASE WHEN UPPER(t1.person_customer) LIKE '%CRA%' OR UPPER(t1.person_customer) LIKE '%LOAN%' THEN 'BCAPD-CRA'
+        WHEN (UPPER(t1.PARTY_NAME) LIKE '%PREM%' AND t1.Account_No LIKE '9%') THEN 'BCAPD-TAG'
+        WHEN UPPER(t1.person_customer) LIKE '%Bill%' OR
+        UPPER(t1.person_customer) LIKE '%TBS%' OR
+        UPPER(t1.person_customer) LIKE 'IMP%' OR
+        UPPER(t1.person_customer) LIKE '%IMP' OR
+        UPPER(t1.person_customer) LIKE 'EXP%' OR
+        UPPER(t1.person_customer) LIKE '%EXP' OR
+        UPPER(t1.person_customer) LIKE '%EXPORT%' OR
+        UPPER(t1.person_customer) LIKE '%IMPORT%' THEN 'BCAPD-TBS'
+        ELSE 'BCAPD-REM'
+        END AS Department,
+        count(CASE when t2.activityname = 'Treasury Maker' OR t2.activityname = 'Treasury Checker' THEN 1 END )AS PendingTreasuryBack
+        ,count(CASE WHEN t2.activityname='Operation Maker' AND t1.transactionstatus='Utilization' THEN 1 END) AS PendingOperationMaker,
+        count(CASE WHEN t2.activityname='Operation Checker' AND t1.transactionstatus='Utilization Approval' THEN 1 END) AS PendingOperationChecker
+
+        ,count(CASE WHEN t2.activityname='DFX_Exit' OR t2.activityname='HLD_Exit' THEN 1 END) AS UtilizationCompleted
+        FROM DFX_T_EXT t1 INNER JOIN WFINSTRUMENTTABLE t2 ON t1.itemindex=t2.var_rec_1
+        WHERE t1.sub_product_id IS NOT NULL AND CAST(t1.Value_Date_To AS DATE) = CAST(getDate() AS DATE )
+        GROUP BY t1.sub_product_id ,t1.person_customer,t1.Party_Name,t1.Account_No,t1.pid) t3
+        GROUP BY t3.sub_product_id, t3.Department
+        ORDER BY t3.Department ASC, t3.sub_product_id ASC
+    </select>
+
+    <resultMap id="customDashboardDataCurrencyMapper" type="com.smbc.epix.transaction.services.dto.table.CustomDashboardDataCurrency">
+        <result property="sellSideCurrency" column="sell_side_currency"/>
+        <result property="department" column="Department"/>
+        <result property="pendingTreasuryBack" column="PendingTreasuryBack"/>
+        <result property="pendingOperationMaker" column="PendingOperationMaker"/>
+        <result property="pendingOperationChecker" column="PendingOperationChecker"/>
+        <result property="utilizationCompleted" column="UtilizationCompleted"/>
+    </resultMap>
+
+    <select id="getCustomDashboardDataCurrency" resultMap="customDashboardDataCurrencyMapper"
+            parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT t3.sell_side_currency,t3.Department,sum(t3.PendingTreasuryBack) AS PendingTreasuryBack,
+        sum(t3.PendingOperationMaker) AS PendingOperationMaker,sum(t3.PendingOperationChecker) AS PendingOperationChecker,
+        sum(t3.UtilizationCompleted) AS UtilizationCompleted
+        FROM
+        (
+        SELECT DISTINCT (t1.sell_side_currency),t1.person_customer,t1.pid,
+        CASE WHEN UPPER(t1.person_customer) LIKE '%CRA%' OR UPPER(t1.person_customer) LIKE '%LOAN%' THEN 'BCAPD-CRA'
+        WHEN (UPPER(t1.PARTY_NAME) LIKE '%PREM%' AND t1.Account_No LIKE '9%') THEN 'BCAPD-TAG'
+        WHEN UPPER(t1.person_customer) LIKE '%Bill%' OR
+        UPPER(t1.person_customer) LIKE '%TBS%' OR
+        UPPER(t1.person_customer) LIKE 'IMP%' OR
+        UPPER(t1.person_customer) LIKE '%IMP' OR
+        UPPER(t1.person_customer) LIKE 'EXP%' OR
+        UPPER(t1.person_customer) LIKE '%EXP' OR
+        UPPER(t1.person_customer) LIKE '%EXPORT%' OR
+        UPPER(t1.person_customer) LIKE '%IMPORT%' THEN 'BCAPD-TBS'
+        ELSE 'BCAPD-REM'
+        END AS Department,
+        count(CASE when t2.activityname = 'Treasury Maker' OR t2.activityname = 'Treasury Checker' THEN 1 END )AS PendingTreasuryBack
+        ,count(CASE WHEN t2.activityname='Operation Maker' AND t1.transactionstatus='Utilization' THEN 1 END) AS PendingOperationMaker,
+        count(CASE WHEN t2.activityname='Operation Checker' AND t1.transactionstatus='Utilization Approval' THEN 1 END) AS PendingOperationChecker
+
+        ,count(CASE WHEN t2.activityname='DFX_Exit' OR t2.activityname='HLD_Exit' THEN 1 END) AS UtilizationCompleted
+        FROM DFX_T_EXT t1 INNER JOIN WFINSTRUMENTTABLE t2 ON t1.itemindex=t2.var_rec_1
+        WHERE t1.sell_side_currency IS NOT NULL AND CAST(t1.Value_Date_To AS DATE) = CAST(getDate() AS DATE )
+        GROUP BY t1.sell_side_currency ,t1.person_customer,t1.Party_Name,t1.Account_No,t1.pid) t3
+        GROUP BY t3.sell_side_currency, t3.Department
+        ORDER BY t3.Department ASC, t3.sell_side_currency ASC
+    </select>
+
+    <!--  Added By Sai for Comment History -->
+    <select id="getCommentHistoryDfx" resultType="map" parameterType="String">
+        SELECT a.Comments, c.TransactionId as Transaction_Id, a.UserAction as Action, a.insertDate as ActionDatetime,
+        dbo.getUserNameDfx(c.TransactionId, a.UserName)UserId, dbo.getUserNameDfx(c.TransactionId, 'CHCreatedBy')CreatedbyName,
+        d.Createddatetime
+        FROM DFX_T_CMPLX_CommentHistory a (nolock)
+        LEFT JOIN DFX_T_EXT c (nolock) ON c.PID = a.PID
+        LEFT JOIN WFINSTRUMENTTABLE d ON d.VAR_REC_1=c.itemindex
+        WHERE TransactionId=#{transactionID} AND d.createdbyname!='SYSTEM' AND a.Comments IS NOT NULL
+        ORDER BY CAST([insertDate] as datetime) DESC
+    </select>
+
+    <resultMap id="swapHistoryMapper" type="com.smbc.epix.transaction.services.dto.table.SwapHistory">
+        <result property="transactionID" column="TransactionID"/>
+        <result property="contractNo" column="Contract_No"/>
+        <result property="versionNumber" column="versionNumber"/>
+        <result property="versionNumber" column="versionNumber"/>
+        <result property="processInstanceID" column="ProcessInstanceID"/>
+        <result property="lockStatus" column="LockStatus"/>
+        <result property="packageNo" column="PackageNo"/>
+    </resultMap>
+
+    <select id="getSwapHistory" resultMap="swapHistoryMapper" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT TOP 1 e.TransactionID,e.Contract_No,e.versionNumber,w.ProcessInstanceID,w.LockStatus,e.PackageNo
+        FROM DFX_T_EXT e (nolock) JOIN WFINSTRUMENTTABLE w ON e.itemindex=w.VAR_REC_1
+        WHERE e.PackageNo=(SELECT packageNo FROM DFX_T_EXT (nolock) WHERE TransactionID=${transactionID}) AND e.Contract_No NOT IN (${contractNo})
+        ORDER BY versionNumber DESC
+    </select>
+
+    <select id="getDeptCode" resultType="java.lang.String">
+        SELECT DeptCode FROM DFX_M_DeptMap WHERE UserIndex=#{userIndex}
+    </select>
+
+    <select id="getUserRoleNameDfx" resultType="java.lang.String" parameterType="int">
+        SELECT DISTINCT a.RoleName FROM TM_M_USERROLES a (nolock) JOIN TM_M_USERROLE_MAP b (nolock) ON a.RoleId=b.RoleId WHERE
+        b.UserIndex=#{userIndex}
+    </select>
+
+    <resultMap id="callbackStatusMapper" type="com.smbc.epix.transaction.services.dto.table.CallbackStatus">
+        <result property="utilizationStatus" column="Utilization_Status"/>
+        <result property="transactionStatus" column="TransactionStatus"/>
+        <result property="itemIndex" column="ItemIndex"/>
+    </resultMap>
+
+    <select id="getCallbackStatus" resultMap="callbackStatusMapper" parameterType="String">
+        SELECT Utilization_Status, ItemIndex, TransactionStatus FROM DFX_T_EXT (NOLOCK) WHERE PID = #{pid}
+    </select>
+
+    <!-- Get latest id for item index in callback history table and add an entry in callback action history table -->
+    <insert id="insertCallbackActionHistory" parameterType="com.smbc.epix.transaction.services.dto.table.CallbackActionHistoryDTO">
+        INSERT INTO DFX_T_CallBackActionHistory (CallbackID, Action, ActionUser)
+        SELECT MAX(ID), #{action}, #{actionUser} FROM DFX_T_CallBackHistory WHERE ItemIndex = #{itemIndex}
+    </insert>
+
+    <resultMap id="callbackAmendmentHistoryMapper" type="com.smbc.epix.transaction.services.dto.table.CallbackAmendmentHistoryDTO">
+        <result property="id" column="ID"/>
+        <result property="itemIndex" column="ItemIndex"/>
+        <result property="contractNo" column="contract_no"/>
+        <result property="callBackWaived" column="Call_back_Waived"/>
+        <result property="reasonNotRequired" column="Reason_Not_Required"/>
+        <result property="riskDisclosureChecked" column="Risk_Disclosure_Checked"/>
+        <result property="customerName" column="Customer_Name"/>
+        <result property="confirmedDate" column="Confirmed_Date"/>
+        <result property="confirmedTime" column="Confirmed_Time"/>
+        <result property="confirmedBy" column="Confirmed_By"/>
+        <result property="callbackID" column="CallbackID"/>
+        <result property="action" column="Action"/>
+        <result property="actionUser" column="ActionUser"/>
+        <result property="actionDateTime" column="ActionDateTime"/>
+        <result property="comments" column="Comments"/>
+    </resultMap>
+
+    <select id="getCallbackAmendmentHistory" resultMap="callbackAmendmentHistoryMapper" parameterType="java.lang.String">
+        SELECT actions.ID as ID, ItemIndex, contract_no, Call_back_Waived, Reason_Not_Required, Risk_Disclosure_Checked,
+        Customer_Name, Confirmed_Date, Confirmed_Time, Confirmed_By, CallbackID, Action, ActionUser, ActionDateTime, Comments
+        FROM DFX_T_CallBackHistory details(nolock)
+        INNER JOIN DFX_T_CallBackActionHistory actions(nolock) ON details.ID=actions.CallbackID
+        WHERE ItemIndex=(SELECT itemindex FROM DFX_T_EXT WHERE PID=#{pid})
+        ORDER BY CallbackID, ID
+    </select>
+
+    <resultMap id="utilizationHistoryMapper" type="com.smbc.epix.transaction.services.dto.table.UtilizationHistoryDTO">
+        <result property="recordID" column="RecordId"/>
+        <result property="ccy1" column="CCY1"/>
+        <result property="ccy2" column="CCY2"/>
+        <result property="ccy1UtilizationAmount" column="CCY1_Utilization_Amount"/>
+        <result property="ccy2UtilizationAmount" column="CCY2_Utilization_Amount"/>
+        <result property="transactionRefNo" column="Transaction_Ref_No"/>
+        <result property="department" column="Department"/>
+        <result property="utilizationStatus" column="utilizationStatus"/>
+        <result property="inputBuyAmount" column="InputBuyAmount"/>
+        <result property="inputBuySellAmount" column="inputBuySellAmount"/>
+        <result property="action" column="Action"/>
+        <result property="actionUser" column="ActionUser"/>
+        <result property="actionDateTime" column="ActionDateTime"/>
+        <result property="comments" column="Comments"/>
+    </resultMap>
+
+    <select id="getUtilizationHistory" resultMap="utilizationHistoryMapper" parameterType="java.lang.String">
+        SELECT details.RecordId as RecordID, CCY2 ,CCY1_Utilization_Amount, CCY2_Utilization_Amount, Transaction_Ref_No, CCY1,
+        Department, utilizationStatus, InputBuyAmount, inputBuySellAmount, Action, ActionUser, ActionDateTime, Comments
+        FROM DFX_T_UtilizationHistory details(nolock)
+        INNER JOIN DFX_T_UtilizationActionHistory actions(nolock) ON details.ID=actions.RecordId
+        WHERE ProcessInstanceID=#{pid}
+        ORDER BY RecordID, actions.ID
+    </select>
+
+    <select id="getTxnSubType" resultType="java.lang.String">
+        SELECT DISTINCT TxnSubTypeName FROM TM_M_TXNSUBTYPE subType
+        INNER JOIN TM_M_TXNTYPE type ON subType.TxnTypeCode = type.TxnTypeCode
+        WHERE ProductCode='DFX'
+        ORDER BY TxnSubTypeName;
+    </select>
+
+    <select id="getTransactionStatus" resultType="java.lang.String">
+        Select TransactionStatus FROM DFX_M_TXN_STATUS ORDER BY TransactionStatus;
+    </select>
+
+    <select id="getFoxTransactionStatus" resultType="java.lang.String">
+        Select Fox_Transaction_Status FROM DFX_M_FOX_STATUS ORDER BY Fox_Transaction_Status;
+    </select>
+
+    <select id="getCurrencyConfig" resultType="map">
+        SELECT Currency_Code, Decimal_Places from DFX_M_CurrencyConfig
+    </select>
+
+    <!-- Get departments for utilization history -->
+    <select id="getDepartmentsForUtilizationHistory" resultType="java.lang.String" parameterType="java.lang.String">
+        SELECT DISTINCT Department FROM DFX_T_UtilizationHistory WHERE RecordId in (
+        SELECT RecordId FROM DFX_T_UtilizationActionHistory WHERE RecordId IN
+        (SELECT insertionOrderID FROM DFX_T_CMPLX_UTILIZATION WHERE Pid = #{pid})
+        AND Action='Settled');
+    </select>
+
+    <!-- Get settled count for utilization history -->
+    <select id="getSettledUtilizationCount" resultType="java.lang.Long" parameterType="java.lang.String">
+        SELECT TOP 1 1 FROM DFX_T_CMPLX_UTILIZATION (NOLOCK) WHERE Pid = #{pid} AND Utilization_CMPLX_Status='Settled'
+    </select>
+
+    <!-- Get Approved count for callback history -->
+    <!-- This query is optimized to handle the case that if at least 1 callback amendment exists it is valid.
+    It does not check whether the Approved has been Amended later or not. This is because if at least 1
+    Approval exists the callback details can never be empty -->
+    <select id="getApprovedCallbackCount" resultType="java.lang.Long" parameterType="java.lang.String">
+        SELECT TOP 1 1 FROM DFX_T_CallBackActionHistory WHERE CallbackID IN (
+        SELECT ID from DFX_T_CallBackHistory WHERE ItemIndex =
+        (SELECT itemindex FROM DFX_T_EXT WHERE PID = #{pid})) AND "Action" = 'Approve';
+    </select>
+</mapper>

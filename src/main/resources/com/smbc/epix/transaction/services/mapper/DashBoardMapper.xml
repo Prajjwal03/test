@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="DashBoardDetails">
+    <resultMap id="todoDetailsMapper" type="com.smbc.epix.transaction.services.dto.table.ToDOTableDetailsDTO">
+        <result property="count" column="row_count" javaType="int" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <select id="getMyWatchListDetailsCount" resultMap="todoDetailsMapper" parameterType="com.smbc.epix.transaction.services.model.CommonToDO">
+        SELECT count(ProcessInstanceID) as row_count FROM WFINSTRUMENTTABLE JOIN
+        TR_T_EXT ON WFINSTRUMENTTABLE.VAR_REC_1=TR_T_EXT.Itemindex
+        LEFT OUTER JOIN PDBUser P1 (nolock) on P1.UserIndex=WFINSTRUMENTTABLE.Createdby
+        LEFT OUTER JOIN PDBUser P2 (nolock) on P2.UserName=WFINSTRUMENTTABLE.LockedByName
+        <foreach item="joinitem" index="index" collection="dynamicJoin" separator="">
+            JOIN ${joinitem}
+        </foreach>
+        where
+        ProcessInstanceID IN (SELECT transactionrefno FROM TM_M_WATCHLIST
+        WHERE createdBy=${searchParam} AND IsActive='Y' )
+        <foreach item="item" index="index" collection="dynamicSearchWhere" separator="">
+            AND ${item}
+        </foreach>
+    </select>
+
+    <select id="getMyWatchListDetails" resultType="map" parameterType="com.smbc.epix.transaction.services.model.CommonToDO">
+        SELECT ${dynamicSelect}, ProcessInstanceID,LockStatus FROM WFINSTRUMENTTABLE (nolock) JOIN
+        TR_T_EXT (nolock) ON WFINSTRUMENTTABLE.VAR_REC_1=TR_T_EXT.Itemindex
+        LEFT OUTER JOIN PDBUser P1 (nolock) on P1.UserIndex=WFINSTRUMENTTABLE.Createdby
+        LEFT OUTER JOIN PDBUser P2 (nolock) on P2.UserName=WFINSTRUMENTTABLE.LockedByName
+        <foreach item="joinitem" index="index" collection="dynamicJoin" separator="">
+            JOIN ${joinitem}
+        </foreach>
+        where
+        ProcessInstanceID IN (SELECT transactionrefno FROM TM_M_WATCHLIST (nolock)
+        WHERE createdBy=${searchParam} AND IsActive='Y' )
+        <foreach item="item" index="index" collection="dynamicSearchWhere" separator="">
+            AND ${item}
+        </foreach>
+        ORDER BY ${orderBy} ${sortBy}
+        OFFSET ${pageNo} ROWS FETCH NEXT ${pageSize} ROWS ONLY
+    </select>
+
+    <select id="getCommonToDoDetailsCount" resultMap="todoDetailsMapper" parameterType="com.smbc.epix.transaction.services.model.CommonToDO">
+        SELECT count(ProcessInstanceID) as row_count FROM(
+        <foreach item="item" index="index" collection="dynamicWhere" separator="UNION">
+            SELECT ProcessInstanceID FROM WFINSTRUMENTTABLE (nolock) JOIN
+            TR_T_EXT (nolock) ON WFINSTRUMENTTABLE.VAR_REC_1=TR_T_EXT.Itemindex
+            LEFT OUTER JOIN PDBUser P1 (nolock) on P1.UserIndex=WFINSTRUMENTTABLE.Createdby
+            LEFT OUTER JOIN PDBUser P2 (nolock) on P2.UserName=WFINSTRUMENTTABLE.LockedByName
+            <foreach item="joinitem" index="index" collection="dynamicJoin" separator="">
+                LEFT OUTER JOIN ${joinitem}
+            </foreach>
+            where ${item}
+            <foreach item="searchitem" index="index" collection="dynamicSearchWhere" separator="">
+                AND ${searchitem}
+            </foreach>
+        </foreach>
+        )as table2
+        <!--where
+        <trim prefix="" prefixOverrides="AND" >
+            <foreach item="item"  index="index" collection="dynamicSearchWhere" separator="" > 
+                AND ${item}
+            </foreach>  
+        </trim> -->
+    </select>
+
+    <select id="getCommonToDoDetails" resultType="map" parameterType="com.smbc.epix.transaction.services.model.CommonToDO">
+        (
+        <foreach item="item" index="index" collection="dynamicWhere" separator="UNION">
+
+            SELECT ${dynamicSelect}, ProcessInstanceID,LockStatus,ActivityName as name FROM WFINSTRUMENTTABLE (nolock) JOIN
+            TR_T_EXT (nolock) ON WFINSTRUMENTTABLE.VAR_REC_1=TR_T_EXT.Itemindex
+            LEFT OUTER JOIN PDBUser P1 (nolock) on P1.UserIndex=WFINSTRUMENTTABLE.Createdby
+            LEFT OUTER JOIN PDBUser P2 (nolock) on P2.UserName=WFINSTRUMENTTABLE.LockedByName
+            <foreach item="joinitem" index="index" collection="dynamicJoin" separator="">
+                LEFT OUTER JOIN ${joinitem}
+            </foreach>
+            where ${item}
+            <foreach item="searchitem" index="index" collection="dynamicSearchWhere" separator="">
+                AND ${searchitem}
+            </foreach>
+        </foreach>
+        )
+        <!-- where
+        <trim prefix="" prefixOverrides="AND" >
+            <foreach item="item"  index="index" collection="dynamicSearchWhere" separator="" > 
+                AND ${item}
+            </foreach>  
+        </trim> -->
+        ORDER BY ${orderBy} ${sortBy}
+        OFFSET ${pageNo} ROWS FETCH NEXT ${pageSize} ROWS ONLY
+    </select>
+
+    <select id="getCommonToDoDetailsCountDfx" resultMap="todoDetailsMapper" parameterType="com.smbc.epix.transaction.services.model.CommonToDO">
+        SELECT count(*) as row_count FROM(
+        <foreach item="item" index="index" collection="dynamicWhere" separator="UNION">
+            SELECT ${dynamicSelect}, WFINSTRUMENTTABLE.ProcessInstanceID, WFINSTRUMENTTABLE.LockStatus,
+            WFINSTRUMENTTABLE.ActivityID, WFINSTRUMENTTABLE.Q_UserId, ValidTill AS ValidTill, WFINSTRUMENTTABLE.WorkItemId, DFX_T_EXT.DeptCode
+            FROM WFINSTRUMENTTABLE (nolock) JOIN DFX_T_EXT (nolock) ON WFINSTRUMENTTABLE.VAR_REC_1=DFX_T_EXT.Itemindex
+            <foreach item="joinitem" index="index" collection="dynamicJoin" separator="">
+                LEFT OUTER JOIN ${joinitem}
+            </foreach>
+            where ${item}
+        </foreach>
+        )as table2
+        where
+        <trim prefix="" prefixOverrides="AND">
+            <foreach item="item" index="index" collection="dynamicSearchWhere" separator="">
+                AND ${item}
+            </foreach>
+        </trim>
+    </select>
+
+    <select id="getCommonToDoDetailsDfx" resultType="map" parameterType="com.smbc.epix.transaction.services.model.CommonToDO">
+        SELECT * FROM (
+        <foreach item="item" index="index" collection="dynamicWhere" separator="UNION">
+            SELECT ${dynamicSelect}, WFINSTRUMENTTABLE.ProcessInstanceID, WFINSTRUMENTTABLE.LockStatus,
+            WFINSTRUMENTTABLE.ActivityID, WFINSTRUMENTTABLE.Q_UserId, ValidTill AS ValidTill, WFINSTRUMENTTABLE.WorkItemId, DFX_T_EXT.DeptCode
+            FROM WFINSTRUMENTTABLE (nolock) JOIN DFX_T_EXT (nolock) ON WFINSTRUMENTTABLE.VAR_REC_1=DFX_T_EXT.Itemindex
+            <foreach item="joinitem" index="index" collection="dynamicJoin" separator="">
+                LEFT OUTER JOIN ${joinitem}
+            </foreach>
+            where ${item}
+        </foreach>
+        )as table2
+        where
+        <trim prefix="" prefixOverrides="AND">
+            <foreach item="item" index="index" collection="dynamicSearchWhere" separator="">
+                AND ${item}
+            </foreach>
+        </trim>
+        ORDER BY ${orderBy} ${sortBy}
+        OFFSET ${pageNo} ROWS FETCH NEXT ${pageSize} ROWS ONLY
+    </select>
+
+    <select id="getMyWatchListDetailsCountDfx" resultMap="todoDetailsMapper" parameterType="com.smbc.epix.transaction.services.model.CommonToDO">
+        SELECT count(*) as row_count FROM(
+        SELECT ${dynamicSelect}, WFINSTRUMENTTABLE.ProcessInstanceID, WFINSTRUMENTTABLE.LockStatus, ValidTill AS ValidTill,
+        WFINSTRUMENTTABLE.WorkItemId FROM WFINSTRUMENTTABLE (nolock) JOIN DFX_T_EXT (nolock) ON WFINSTRUMENTTABLE.VAR_REC_1=DFX_T_EXT.Itemindex
+        <foreach item="joinitem" index="index" collection="dynamicJoin" separator="">
+            LEFT OUTER JOIN ${joinitem}
+        </foreach>
+        where
+        ProcessInstanceID IN (SELECT transactionrefno FROM TM_M_WATCHLIST
+        WHERE createdBy=${searchParam} AND IsActive='Y' ) AND BranchCode=${branch}
+        AND BusinessCategoryCode=${product}
+        )as table2
+        where
+        <trim prefix="" prefixOverrides="AND">
+            <foreach item="item" index="index" collection="dynamicSearchWhere" separator="">
+                AND ${item}
+            </foreach>
+        </trim>
+    </select>
+
+    <select id="getMyWatchListDetailsDfx" resultType="map" parameterType="com.smbc.epix.transaction.services.model.CommonToDO">
+        SELECT *,LockStatus,ProcessInstanceID FROM(
+        SELECT ${dynamicSelect}, WFINSTRUMENTTABLE.ProcessInstanceID, WFINSTRUMENTTABLE.LockStatus, ValidTill AS ValidTill,
+        WFINSTRUMENTTABLE.WorkItemId FROM WFINSTRUMENTTABLE (nolock) JOIN DFX_T_EXT (nolock) ON WFINSTRUMENTTABLE.VAR_REC_1=DFX_T_EXT.Itemindex
+        <foreach item="joinitem" index="index" collection="dynamicJoin" separator="">
+            LEFT OUTER JOIN ${joinitem}
+        </foreach>
+        where
+        ProcessInstanceID IN (SELECT transactionrefno FROM TM_M_WATCHLIST (nolock)
+        WHERE createdBy=${searchParam} AND IsActive='Y' ) AND BranchCode=${branch}
+        AND BusinessCategoryCode=${product}
+        )as table2
+        where
+        <trim prefix="" prefixOverrides="AND">
+            <foreach item="item" index="index" collection="dynamicSearchWhere" separator="">
+                AND ${item}
+            </foreach>
+        </trim>
+        ORDER BY ${orderBy} ${sortBy}
+        OFFSET ${pageNo} ROWS FETCH NEXT ${pageSize} ROWS ONLY
+    </select>
+</mapper>

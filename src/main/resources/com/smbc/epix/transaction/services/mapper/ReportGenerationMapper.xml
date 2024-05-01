@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ReportGeneration">
+    <resultMap id="reportGenerationMapper" type="com.smbc.epix.transaction.services.dto.ReportGenerationDTO">
+        <result property="reportId" column="ReportId" javaType="String" jdbcType="VARCHAR"/>
+        <result property="reportName" column="ReportName" javaType="String" jdbcType="VARCHAR"/>
+        <result property="description" column="DESCRIPTION" javaType="String" jdbcType="VARCHAR"/>
+        <result property="reportType" column="REPORTTYPE" javaType="String" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="getReportDetails" resultMap="reportGenerationMapper" parameterType="com.smbc.epix.transaction.services.model.DynamicTable">
+        SELECT ReportId,ReportName,DESCRIPTION,REPORTTYPE FROM CRREPORTTABLE (nolock) WHERE REPORTID IN( SELECT REPORTID FROM TM_M_REPORTS (nolock)
+        WHERE RoleId IN(SELECT roleid FROM TM_M_USERROLE_MAP (nolock) WHERE UserIndex=${passingValue1}) And BranchCode=${searchString1} And
+        ProductCode=${searchString2})
+    </select>
+</mapper>

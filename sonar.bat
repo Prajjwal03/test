@@ -1,0 +1,1 @@
+mvn sonar:sonar -Dsonar.projectKey=EPIXTreasuryApp -Dsonar.host.url=http://127.0.0.1:9000 -Dsonar.login=41fa50d4c8a8d8f0629d71bb26927242be3212a2

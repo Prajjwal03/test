@@ -1,0 +1,4 @@
+# Based on maven properties, this will be updated to 'production' or 'development'
+spring:
+  profiles:
+    active: @spring.profiles.active@

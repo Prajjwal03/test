@@ -1,0 +1,26 @@
+<ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="ehcache.xsd" updateCheck="true"
+         monitoring="autodetect" dynamicConfig="true">
+
+    <diskStore path="java.io.tmpdir"/>
+
+    <cache name="getUserByUserUid" maxEntriesLocalHeap="10000"
+           maxEntriesLocalDisk="1000" eternal="false" diskSpoolBufferSizeMB="20"
+           timeToIdleSeconds="7200" timeToLiveSeconds="14400"
+           memoryStoreEvictionPolicy="LFU" transactionalMode="off" copyOnRead="true"
+           copyOnWrite="true">
+
+        <persistence strategy="localTempSwap"/>
+        <copyStrategy class="net.sf.ehcache.store.compound.ReadWriteSerializationCopyStrategy"/>
+    </cache>
+
+    <cache name="getAllUsers" maxEntriesLocalHeap="100000"
+           maxEntriesLocalDisk="10000" eternal="false" diskSpoolBufferSizeMB="20"
+           timeToIdleSeconds="86400" timeToLiveSeconds="172800"
+           memoryStoreEvictionPolicy="LFU" transactionalMode="off" copyOnRead="true"
+           copyOnWrite="true">
+
+        <persistence strategy="localTempSwap"/>
+        <copyStrategy class="net.sf.ehcache.store.compound.ReadWriteSerializationCopyStrategy"/>
+    </cache>
+</ehcache>
