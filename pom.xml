@@ -644,8 +644,6 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                         <source>17</source>
-                         <target>17</target>
                     <excludes>
                         <exclude>
                             com/smbc/epix/transaction/services/configuration/SwaggerConfig.java
