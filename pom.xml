@@ -586,6 +586,12 @@
          </dependency>     
         <!-- todo till this added for factorypath file -->
     </dependencies>
+    <repositories>
+        <repository>
+            <id>jenkins-releases</id>
+            <url>https://repo.jenkins-ci.org/releases/</url>
+        </repository>
+    </repositories>     
 
     <properties>
         <java.version>1.8</java.version>
